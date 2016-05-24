@@ -17,7 +17,7 @@ MongoClient.connect(url, function (err, theDB) {
 
 
 
-    module.exports.find = function (coll, q, callback) {
+module.exports.find = function (coll, q, callback) {
         db.collection("Logins").findOne(q, function (err, result) {
             test.equal(null, err);
 
