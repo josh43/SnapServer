@@ -38,6 +38,29 @@ module.exports.deleteAccount = function ( user, pass, callback) {
     });
 }
 
+
+module.exports.getAllItemsAndGroups = function (user, callback){
+    findUser(user,function(result){
+        if(!result["Error"]){
+            // parse through info for group
+            var groups = [];
+            for(var i = 0; i < 20; i++){
+                // only return first two
+                groups[i] = [];
+            }
+            for(var groupName in result.groups){
+
+            }
+
+        }else{
+            callback({"Error":"could not find user"});
+        }
+    });
+}
+
+module.exports.getGroupContents = function(user, groupName, callback){
+    db.collection("Groups")
+}
 module.exports.changePassword = function ( user, oldPass,newPass,callback) {
     db.collection("Logins").findOneAndUpdate({"username": user,"pass":oldPass},
         {$set : {"pass":newPass} },
@@ -61,6 +84,18 @@ module.exports.changePassword = function ( user, oldPass,newPass,callback) {
                     callback({"Error": "Incorrect password"});
 
                 }
+
+        }
+    });
+}
+module.exports.findUser = function(user,callback){
+     db.collection("Logins").findOne({"username": user}, function (err, res) {
+       if(err){
+           callback({"Error":err});
+       } else if (res == null) {
+            callback({"Error": "could not find user"});
+        } else {
+            callback(res);
 
         }
     });
