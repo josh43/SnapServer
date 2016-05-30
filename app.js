@@ -7,9 +7,10 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var cors = require('cors')
 
 var app = express();
-var Utility = require("./Utility");
+var Utility = require("./Database/DBUtility");
 var globalDB = null;
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -24,65 +25,29 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+
+
+// catch 404 and forward to error handler
+app.use(cors());
+
+
+
 app.use('/', routes);
 app.use('/users', users);
 
-// catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-var onComplete = function(){
-    console.log("Done inserting test doc");
-
-}
 
 
-
-
-
-var insertDocument = function(db, callback) {
-    db.collection('restaurants').insertOne( {
-        "address" : {
-            "street" : "2 Avenue",
-            "zipcode" : "10075",
-            "building" : "1480",
-            "coord" : [ -73.9557413, 40.7720266 ]
-        },
-        "borough" : "Manhattan",
-        "cuisine" : "Italian",
-        "grades" : [
-            {
-                "date" : new Date("2014-10-01T00:00:00Z"),
-                "grade" : "A",
-                "score" : 11
-            },
-            {
-                "date" : new Date("2014-01-16T00:00:00Z"),
-                "grade" : "B",
-                "score" : 17
-            }
-        ],
-        "name" : "Vella",
-        "restaurant_id" : "41704620"
-    }, function(err, result) {
-        assert.equal(err, null);
-        console.log("Inserted a document into the restaurants collection.");
-        callback();
-    });
-};
 
 // error handlers
 
 
 
-
-
-app.get("/",function(req,res){
-    res.send("Holla word\n");
-});
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
