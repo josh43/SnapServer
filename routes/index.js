@@ -64,13 +64,11 @@ router.get("/getGroups/:loginID",function(req,res){
   if(!(validateUserName(username))){
     res.send({"Error":"Please enter valid user name"});
 
-  }else if(!(validatePassword(password))){
-    res.send({"Error":"Please enter valid password"});
-  }else {
+  }else{
 
-    console.log(username + "Logging in\n");
+    console.log(username + "getting groups \n");
 
-    getter.getGroupNames(username, password, function (result) {
+    getter.getGroupNames(username, function (result) {
       res.send(result);
     });
   }
