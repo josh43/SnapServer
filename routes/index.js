@@ -59,6 +59,22 @@ router.get("/register/:loginID/:password/:email/:phone",function(req,res){
     });
   }
 });
+router.get("/getGroups/:loginID",function(req,res){
+  var username = req.params.loginID;
+  if(!(validateUserName(username))){
+    res.send({"Error":"Please enter valid user name"});
+
+  }else if(!(validatePassword(password))){
+    res.send({"Error":"Please enter valid password"});
+  }else {
+
+    console.log(username + "Logging in\n");
+
+    getter.getGroupNames(username, password, function (result) {
+      res.send(result);
+    });
+  }
+});
 router.get("/login/:loginID/:password",function(req,res){
 
   var username = req.params.loginID;
