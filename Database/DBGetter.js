@@ -2,7 +2,6 @@
  * Created by neo on 5/26/16.
  */
 var db = null;
-var async = require("async");
 
 /*
 
