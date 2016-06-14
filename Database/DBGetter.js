@@ -24,6 +24,32 @@ module.exports.getFriendList = function (user, callback) {
         }
     });
 }
+module.exports.getUserInfo = function(username,callback){
+    db.collection("Logins").findOne({"username": username}, function (err, res) {
+       if(err){
+           callback({"Error":"bad get user info req"});
+       }
+        if (res == null) {
+            callback({"Error": "User not found"});
+        } else {
+            callback(res);
+        }
+
+    });
+}
+module.exports.getGroupInfo = function(groupID,callback){
+    db.collection("Groups").findOne({"_id": groupID}, function (err, res) {
+        if(err){
+            callback({"Error":"bad get group info req"});
+        }
+        if (res == null) {
+            callback({"Error": "Group not found"});
+        } else {
+            callback(res);
+        }
+
+    });
+}
 module.exports.getGroupNames = function(user,callback){
     db.collection("Logins").findOne({"username": user}, function (err, res) {
         if (err) {
@@ -36,8 +62,8 @@ module.exports.getGroupNames = function(user,callback){
         }
     });
 }
-module.exports.getGroupItems = function (user, groupName, callback) {
-    db.collection("Groups").findOne({"username": user, "gName": groupName}, function (err, res) {
+module.exports.getGroupItems = function ( groupID, callback) {
+    db.collection("Groups").findOne({"_id":groupID}, function (err, res) {
         if (err) {
             callback(err);
         } else if (res == null) {
@@ -48,8 +74,8 @@ module.exports.getGroupItems = function (user, groupName, callback) {
         }
     });
 }
-module.exports.getGroupMembers = function (user, groupName, callback) {
-    db.collection("Groups").findOne({"username": user, "gName": groupName}, function (err, res) {
+module.exports.getGroupMembers = function (groupID, callback) {
+    db.collection("Groups").findOne({"_id":groupID}, function (err, res) {
         if (err) {
             callback(err);
         } else if (res == null) {

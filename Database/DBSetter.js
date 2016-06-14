@@ -21,81 +21,95 @@ setTimeout(function () {
 
  */
 
-module.exports.removeFriendFromGroup = function (user, groupName, toRemove,callback) {
-    db.collection("Groups").findOneAndUpdate({"username": user, "gName": groupName},
-        {
-            $pull: {"members": toRemove},
-        },
-        {
-            returnOriginal: false
-        },
-        function(err,res){
-            if(!err) {
-                if (res) {
-                    if (res.value != null) {
-                        if (res.value.members.length < 1) {
-                            // delete it
-                            console.log("DELETE MEEE\n");
-                            db.collection("Groups").findOneAndDelete({"username": user, "gName": groupName});
+module.exports.removeFriendFromGroup = function (groupID, toRemove,callback) {
+    
+    db.collection("Logins").findOne({"username":toRemove},function(err,res){
+        if(err || res == null){
+            callback({"Error":"Unable to remove friend from friend group"});
+        }else {
+            db.collection("Groups").findOneAndUpdate({"_id": groupID},
+                {
+                    $pull: {"members": toRemove},
+                },
+                {
+                    returnOriginal: false
+                },
+                function (err, res) {
+                    if (!err) {
+                        if (res) {
+                            if (res.value != null) {
+                                if (res.value.members.length < 1) {
+                                    // delete it
+                                    console.log("DELETE MEEE\n");
+                                    db.collection("Groups").findOneAndDelete({"_id": groupID});
 
-                        }
-
-
-                    db.collection("Logins").findOneAndUpdate({"username": toRemove},
-                        {$pull: {"groups": {"username": user, "groupName": groupName}}});
-
-
-                    callback({"Success": "always"});
-
-                    }else{
-                        callback({"Error":"Couldnt find member to remove"});
-
-                    }
-                }else{
-                    callback({"Error":"Couldnt find member to remove"});
-
-                }
-            }else{
-                callback({"Error":"Couldnt find member to remove"});
-            }
-        });
+                                }
 
 
+                                db.collection("Logins").findOneAndUpdate({"username": toRemove},
+                                    {$pull: {"groups": {"_id": groupID}}});
 
 
-}
-module.exports.addFriendToGroup = function (theUser, groupName, newFriend, callback) {
+                                callback({"Success": "always"});
 
-
-                    db.collection("Groups").findOneAndUpdate({"username": theUser, "gName": groupName},
-                        {$addToSet: {"members": {$each: [newFriend]}}}
-                        , {returnNewDocument: true},
-                        function (err, res) {
-                            if (err) {
-                                callback(err);
-                            } else if (res == null) {
-                                callback({"Error": "could not find group"});
                             } else {
-                                // doesnt do much
-                                
-                                db.collection("Logins").findOneAndUpdate({"username": newFriend},
-                                    {$addToSet: {"groups": {"username":theUser,"groupName":groupName}}}, function (err, res) {
-                                        if (err) {
-                                            // undo insert
-
-                                            this.removeFriendFromGroup(newFriend, groupName);
-                                            callback({"Error": "could not add to group"});
-                                        } else {
-                                            callback({"Successt": "good job"});
-                                        }
-
-                                    });
-
+                                callback({"Error": "Couldnt find member to remove"});
 
                             }
-                        });
+                        } else {
+                            callback({"Error": "Couldnt find member to remove"});
 
-          
+                        }
+                    } else {
+                        callback({"Error": "Couldnt find member to remove"});
+                    }
+                });
+
+        }
+    });
+
+}
+module.exports.addFriendToGroup = function (groupID, newFriend, callback) {
+
+        
+    db.collection("Logins").findOne({"username":newFriend},function(err,res)
+    {
+
+        if(err){
+            callback({"Error":"Couldnt Find User"});
+        }else if(res == null){
+            callback({"Error":"Couldnt Find User"});
+        }else {
+            db.collection("Groups").findOneAndUpdate({"_id": groupID},
+                {$addToSet: {"members": {$each: [newFriend]}}}
+                , {returnNewDocument: true},
+                function (err, res) {
+                    if (err) {
+                        callback(err);
+                    } else if (res == null) {
+                        callback({"Error": "could not find group"});
+                    } else {
+
+                        db.collection("Logins").findOneAndUpdate({"username": newFriend},
+                            {$addToSet: {"groups": {"_id": groupID}}}, function (err, res) {
+                                if (err) {
+                                    // undo insert
+
+                                    this.removeFriendFromGroup(groupID, newFriend, callback);
+                                   // callback({"Error":"Failed to add friend to group"});
+
+                                } else {
+                                    callback({"Successt": "good job"});
+                                }
+
+                            });
+
+
+                    }
+                });
+        }
+
+    });
 
 }
 module.exports.addFriend = function (user, coolFriend, callback) {
@@ -179,8 +193,8 @@ module.exports.acceptFriend = function (user, coolFriend, callback) {
 }
 module.exports.removeFriend = function (user, unCoolFriend, callback) {
     db.collection("Logins").findOne({"username": user}, function (err, res) {
-        if (res == null) {
-            callback({"Error": "User not found"});
+        if (res == null || err) {
+            callback({"Error": "User not found when trying to delete"});
         } else {
             //{ $addToSet: { "friends": { $each: [coolFriend] } } }
 
@@ -203,9 +217,9 @@ module.exports.removeFriend = function (user, unCoolFriend, callback) {
 
 }
 
-module.exports.addItemToGroup = function (user, groupName, item, callback) {
+module.exports.addItemToGroup = function ( groupID, item, callback) {
 
-    db.collection("Groups").updateOne({"username": user, "gName": groupName},
+    db.collection("Groups").updateOne({"_id":groupID},
         {$addToSet: {"items": {$each: [item]}}},
         function (err, res) {
             if (err) {
@@ -224,9 +238,9 @@ module.exports.addItemToGroup = function (user, groupName, item, callback) {
         });
 
 }
-module.exports.removeItemFromGroup = function (user, groupName, item, callback) {
+module.exports.removeItemFromGroup = function (groupID, item, callback) {
 
-    db.collection("Groups").updateOne({"username": user, "gName": groupName},
+    db.collection("Groups").updateOne({"_id":groupID},
         {$pull: {"items": item}},
         function (err, res) {
             if (err) {
@@ -235,26 +249,26 @@ module.exports.removeItemFromGroup = function (user, groupName, item, callback) 
             } else if (res == null) {
                 callback({"Error": "Group does not  exist"});
 
-            } else if (res.matchedCount == 1) {
+            } else if (res.modifiedCount >= 1) {
+                // this doesnt neccessarily mean that it removed something
                 callback({"Success": "updated the list"});
 
             } else {
-                callback({"Error": "Group does not  exist"});
+                callback({"Error": "Item not found"});
 
             }
         });
 
 }
-module.exports.createGroup = function (user, groupName, callback) {
+
+module.exports.createGroup = function (groupName,userToAdd, callback) {
     console.log("Loggin int to db");
     if (db == null) {
         console.log("DB WAS NULL\n");
     }
-    db.collection("Groups").findOne({"username": user, "gName": groupName}, function (err, res) {
-        if (res == null) {
+
 // create one
             db.collection("Groups").insertOne({
-                "username": user,
                 "gName": groupName,
                 "items": [],
                 "members": [],
@@ -263,24 +277,34 @@ module.exports.createGroup = function (user, groupName, callback) {
                 if (err != null) {
                     callback({"Error": "db interal"});
                 } else if (r.insertedCount == 1) {
-                    db.collection("Groups").findOne({"username": user, "gName": groupName},
+                    // FIX HERE YOU WANT TO PUT THE PERSON WHO CREATED IT IN THE GROUP
+                    // ALSO RETURN THE GROUP ID
+                    console.log("R.ops._id is " + r.ops[0]._id);
+                    db.collection("Groups").findOne({"_id": r.ops[0]._id, "gName": groupName},
                         function (err, succ) {
-                            callback({"Success": succ._id});
-
+                            if(succ) {
+                                callback({"Success": r.ops[0]._id});
+                            }else{
+                                callback({"Error":"Failed to create group"});
+                            }
                         });
-                    db.collection("Groups").updateOne({"username": user, "gName": groupName},
-                        {$addToSet: {"members": {$each: [user]}}},
+                    //r.insertedId
+                    db.collection("Groups").updateOne({"_id": r.ops[0]._id, "gName": groupName},
+                        {$addToSet: {"members": {$each: [userToAdd]}}},
                         function (err, succ) {
                             // dont do anything
 
                         });
+
+                    db.collection("Logins").updateOne({"username":userToAdd},
+                        {$addToSet:{"groups":{"_id":r.ops[0]._id}}},
+                    function(err,succ){
+
+                    })
                 } else {
                     callback({"Error": "Could not create"});
                 }
             });
 
-        } else {
-            callback({"Error": "Group already exists"});
-        }
-    });
+
 }
