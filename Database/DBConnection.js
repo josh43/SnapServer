@@ -2,6 +2,13 @@
  * Created by neo on 5/26/16.
  */
 
+/* INDEXES
+    db.USERS.createIndex({'username':1})
+
+    sue db.USERS.getIndexes() to find indexes
+
+ */
+
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient;
 var theRealDB = null;

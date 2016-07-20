@@ -7,11 +7,15 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
-var cors = require('cors')
+var cors = require('cors');
 
 var app = express();
-var Utility = require("./Database/DBUtility");
-var globalDB = null;
+var Get = require("./routes/Get");
+var Post = require("./routes/Post");
+var Put= require("./routes/Put");
+var Delete = require("./routes/Delete");
+
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -32,8 +36,14 @@ app.use(cors());
 
 
 
-app.use('/', routes);
-app.use('/users', users);
+
+
+app.use(Get);
+app.use(Post);
+app.use(Put);
+app.use(Delete);
+//app.use('/', routes);
+//app.use('/users', users);
 
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

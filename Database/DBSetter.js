@@ -1,7 +1,10 @@
 /**
  * Created by neo on 5/26/16.
  */
+
+var Util = require('./DBUtility')
 var db = null;
+var setter = {};
 /*
 
  */
@@ -10,18 +13,32 @@ setTimeout(function () {
     db = require("./DBConnection").getDB();
 }, 4000);
 
-/* BASIC PRO SCHEMA RIIIGHT>AS>ADSDASD>ASD ASJKDFASKDFJ
- db.collection("Groups").insertOne({
- "username": user,
- "gName": groupName,
- "items": [],
- "members": [],
- "admins":[],
- }
 
+setter.setRequest = function(theRequqest,error){
+
+}
+/*
+
+the thing about this is that it will silently fail NOOOO
+because there is no way to do things like
+
+collection.updateMany({a:1}, {$set:{b:0}}, o, function(err, r) {
+    test.equal(null, err);
+    test.equal(2, r.result.n);
  */
 
-module.exports.removeFriendFromGroup = function (groupID, toRemove,callback) {
+setter.update = function(query,update,callback){
+    db.collection(Util.USER_COLLECTION).updateMany(query,update,function(err,res){
+                callback(Util.handleWith({"Error":"Couldn't update"},{"Error":"Couldn't update"},err,res));
+    });
+};
+setter.updateOne = function(query,update,callback){
+    db.collection(Util.USER_COLLECTION).updateOne(query,update,function(err,res){
+        callback(Util.handleWith({"Error":"Couldn't update"},{"Error":"Couldn't update"},err,res));
+    });
+};
+
+setter.removeFriendFromGroup = function (groupID, toRemove,callback) {
     
     db.collection("Logins").findOne({"username":toRemove},function(err,res){
         if(err || res == null){
@@ -69,7 +86,7 @@ module.exports.removeFriendFromGroup = function (groupID, toRemove,callback) {
     });
 
 }
-module.exports.addFriendToGroup = function (groupID, newFriend, callback) {
+setter.addFriendToGroup = function (groupID, newFriend, callback) {
 
         
     db.collection("Logins").findOne({"username":newFriend},function(err,res)
@@ -112,7 +129,7 @@ module.exports.addFriendToGroup = function (groupID, newFriend, callback) {
     });
 
 }
-module.exports.addFriend = function (user, coolFriend, callback) {
+setter.addFriend = function (user, coolFriend, callback) {
     db.collection("Logins").findOne({"username": user}, function (err, res) {
         if (res == null) {
             callback({"Error": "User not found"});
@@ -133,7 +150,7 @@ module.exports.addFriend = function (user, coolFriend, callback) {
 
     });
 }
-module.exports.acceptFriend = function (user, coolFriend, callback) {
+setter.acceptFriend = function (user, coolFriend, callback) {
     db.collection("Logins").update(
         {"username": user},
         {$pull: {"pendingF": {$each: [coolFriend]}}},
@@ -191,7 +208,7 @@ module.exports.acceptFriend = function (user, coolFriend, callback) {
             }
         });
 }
-module.exports.removeFriend = function (user, unCoolFriend, callback) {
+setter.removeFriend = function (user, unCoolFriend, callback) {
     db.collection("Logins").findOne({"username": user}, function (err, res) {
         if (res == null || err) {
             callback({"Error": "User not found when trying to delete"});
@@ -217,7 +234,7 @@ module.exports.removeFriend = function (user, unCoolFriend, callback) {
 
 }
 
-module.exports.addItemToGroup = function ( groupID, item, callback) {
+setter.addItemToGroup = function ( groupID, item, callback) {
 
     db.collection("Groups").updateOne({"_id":groupID},
         {$addToSet: {"items": {$each: [item]}}},
@@ -238,7 +255,7 @@ module.exports.addItemToGroup = function ( groupID, item, callback) {
         });
 
 }
-module.exports.removeItemFromGroup = function (groupID, item, callback) {
+setter.removeItemFromGroup = function (groupID, item, callback) {
 
     db.collection("Groups").updateOne({"_id":groupID},
         {$pull: {"items": item}},
@@ -261,7 +278,7 @@ module.exports.removeItemFromGroup = function (groupID, item, callback) {
 
 }
 
-module.exports.createGroup = function (groupName,userToAdd, callback) {
+setter.createGroup = function (groupName,userToAdd, callback) {
     console.log("Loggin int to db");
     if (db == null) {
         console.log("DB WAS NULL\n");
@@ -308,3 +325,5 @@ module.exports.createGroup = function (groupName,userToAdd, callback) {
 
 
 }
+
+module.exports = setter;

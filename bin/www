@@ -8,12 +8,13 @@ var app = require('../app');
 var debug = require('debug')('untitled:server');
 var http = require('http');
 
+var DEBUGGING =1;
 /**
  * Get port from environment and store in Express.
  */
 //var port = normalizePort(process.env.PORT || '3000');
 
-var port = normalizePort(process.env.PORT ||'8080');
+var port = normalizePort(DEBUGGING ?'3000' : '8080');
 app.set('port', port);
 
 /**
@@ -23,12 +24,16 @@ app.set('port', port);
 var server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
+ * Listen on pasdrovided port, on all network interfaces.
  */
 
 //server.listen(port);
 
-server.listen(80,'10.249.83.114');
+if(DEBUGGING){
+  server.listen(port,'localhost');
+}else {
+  server.listen(port, '10.249.83.114');
+}
 //server.listen(8080,'localhost');
 
 server.on('error', onError);
