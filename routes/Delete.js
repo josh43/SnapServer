@@ -100,6 +100,8 @@ router.delete("/deleteSnapFromStory/:username/:password/:snapID", function (req,
                             var username = userArray[i];
                             // if it fails oh well, you will be able to see content that should have been deleted
                             //
+                            // O
+                            //
                             Setter.updateOne({"username": username}, {$addToSet: {"actionList": action}});
                         }
                     }
