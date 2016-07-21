@@ -38,7 +38,13 @@ db.USERS.update({"username":"Falcon"},
         'actionList':[]
 },{upsert:true});
 
-
+db.USERS.update(me,
+	{$addToSet:
+		{"snapchats":
+			{"snapID":new ObjectId("5790690a0eb3b6301e0aaf96")}
+		}
+	}
+);
 createUser("Mark");
 createUser("Auto");
 

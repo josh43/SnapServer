@@ -230,8 +230,9 @@ router.post("/addFriend/:username/:friendName/:type",function(req,res){
                         //failed DAMN
                         res.send(Util.createErrorMessage("Failed to add you to the friends list!"));
                         },function(onSucc){
-                            var theAction= Util.createAction(FRIEND_NOTIFICATION);
-                            theAction.action = {"username":username};
+                            var usernameAction = {"username":username};
+                            var theAction= Util.createAction(Util.FRIEND_NOTIFICATION,usernameAction);
+                            
                             Setter.updateOne({"username":friendName},{$addToSet:{"actionList":theAction}},function(res){
 
                             });
