@@ -53,7 +53,8 @@ var createNewOptions = function(fileName){
             lastSeen:"",
             lastSeenBy:"",
             screenShotted:"",
-            date:{}
+            date:{},
+	    length:-1.0
         }
 
     }
