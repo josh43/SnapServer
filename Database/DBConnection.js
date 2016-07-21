@@ -12,7 +12,7 @@
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient;
 var theRealDB = null;
-var url = 'mongodb://localhost:27017/Test';
+var url = 'mongodb://localhost:27017/test';
 var connected = false;
 MongoClient.connect(url, function (err, theDB) {
     assert.equal(null, err);
