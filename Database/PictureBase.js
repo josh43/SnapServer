@@ -89,7 +89,11 @@ module.exports.getContentInfo = function(snapID,callback){
                 callback(BASIC_ERROR);
             }else{
 
-                    callback({"Success":res});
+                if(res.length > 0){
+                    callback({"Success":res[0]});
+                }else{
+                    callback({"Failure":"Unable To Locate that Snap :|");
+                }
 
             }
         });
