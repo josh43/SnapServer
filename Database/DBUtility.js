@@ -14,7 +14,6 @@ var url = 'mongodb://localhost:27017/Test';
 
 //var db = require('./DBConnection').getDB();
 
-var _this = this;
 var db = null;
 /*
 
@@ -30,17 +29,13 @@ setTimeout(function(){
 Basic things ling creation account deleting, chaning password, 
 
  */
-var noPendingAction = 0;
-var friendRequest = 1;
-var newItem = 1 << 1;
-var itemAndFriend = friendRequest | newItem;
 var toExport = module.exports = {};
 
 // BEGIN BASIC CONSTANTS
 toExport.MUTUAL_FRIENDS = 1;
 toExport.THEY_ADDED_ME = 2;
 toExport.I_ADDED_THEM = 3;
-toExport.NOT_FRIENDS = 4
+toExport.NOT_FRIENDS = 4;
 toExport.IGNORE = 5;
 
 toExport.RECEIVED_SNAP = 1;
@@ -62,19 +57,25 @@ toExport.STANDARD_ERROR_MESSAGE = {"Error":{"Message":"Something went wrong :("}
 // [self Command.action]
 // } // muhahahahahahahaha!
 toExport.ACTION_MESSAGE = {"Command":{"type":-1,"action":{}}};
-toExport.REMOVE_SNAP = 1
+toExport.REMOVE_SNAP = 1;
 
 toExport.createErrorMessage = function(msg){
     var toReturn = toExport.ERROR_MESSAGE;
     toReturn.Error = {"Message":msg};
     return toReturn;
-}
+};
 toExport.removeAction = function(snapID){
     var builder = toExport.ACTION_MESSAGE;
     builder.type = toExport.REMOVE_SNAP;
     builder.action = {"Method":"removeSnapWithID","snapID":snapID};
     return builder;
-}
+};
+toExport.addFriendAction = function(username){
+    var builder = toExport.ACTION_MESSAGE;
+    builder.type = toExport.THEY_ADDED_ME;
+    builder.action = {"Method":"friendAddedMe","username":username};
+    return builder;
+};
 // END BASIC CONSTANTS
 
 // COOOKIE CUTTER IF STATEMENT
@@ -134,19 +135,19 @@ toExport.createFriend = function(friendName,friendType){
         'friendType':friendType
             };
 };
-toExport.createAction = function(actionType){
+toExport.createAction = function(actionType,withAction){
 
     return {
         'Command': {
             'type': actionType,
-            'action': {}
+            'action': withAction
         }
     };
 };
 toExport.createSnap = function(snapID){
 
     return {
-        'snapID':snapID,
+        'snapID':snapID
     };
 };
 

@@ -14,6 +14,8 @@ var MongoClient = require('mongodb').MongoClient;
 var theRealDB = null;
 var url = 'mongodb://localhost:27017/test';
 var connected = false;
+
+// Dont forget to sudo mongod :|||||||
 MongoClient.connect(url, function (err, theDB) {
     assert.equal(null, err);
     console.log("Connected correctly to server.");

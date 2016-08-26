@@ -62,7 +62,7 @@ db.fs.files.update(
     	   "seenBy":["BillyBob"],
     	   "sentTo":["airbody","billybob"],
     	   "numViews":2,"lastSeen":"",
-    	   "screenShotted":"",
+    	   "screenShotted":[],
     	   "date":new Date(),
     	   "length":1.8
     	   }

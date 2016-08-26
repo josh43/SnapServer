@@ -31,6 +31,7 @@ iOS.checkMyFriendsStories(queryWithProjection/:username,:password/:{"username":u
 
 
 router.get("/login/:username/:password",function(req,res){
+
    Validator.validateAndCheckAuth(req.params.username,req.params.password,function(result){
        res.send(result);
    });
@@ -43,13 +44,55 @@ router.get("/getPictureInfo/:snapID",function(req,res){
 });
 
 // will return an array of content that you should check out BRAH!!!
+/* You can query on multiple fields!!!!
+ db.USERS.find({
+ "username":"Ronna", \\ query field 1
+ "story.date":{$gte : ISODate("2016-07-26T01:13:21.111Z")} \\ query 2
+ }).pretty()
+
+
+ db.USERS.aggregate([
+    {$project:{"_id":0,"story":1,"username":1}},
+    {$match:{"username":"Ronna","story.date":{$gte:ISODate("2016-07-26T01:13:21.111Z")}}}
+ ])
+ */
+
+router.get("/testAgg",function(req,res){
+   Getter.aggregate([
+       {$project:{"_id":0,"story":1,"username":1}},
+       {$match:{"username":"Ronna","story.date":{$gte:new Date("2016-07-26T01:13:21.111Z")}}}
+   ],function(data){
+       res.send(data);
+   })
+});
+// WILL RETURN THIS
+// "story" : [ { "snapID" : ObjectId("5796b931ef8de5562342f347"), "date" : ISODate("2016-07-26T01:13:21.111Z") },
+//              { "snapID" : ObjectId("5796c13023c5368b31996e79"), "date" : ISODate("2016-07-26T01:47:28.388Z") }
+//           ]
+
+
+
 router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked",function(req,res){
     var username = req.params.username;
     var password = req.params.password;
     var lastChecked = req.params.lastTimeChecked;
+    var theDate = new Date(lastChecked);
+
+   // var twentyFourAgo =  Date.now();
+   // twentyFourAgo.setTime(twentyFourAgo.getMilliseconds() - (24 * 1000 * 60));
+//
+    // None of the easy time functions are implemented soo this will be a TODO://
+
+
+   // if(theDate < twentyFourAgo){
+   //     console.log("Error trying to make query past 24 hours ago :(");
+   //     res.send({"Error": "trying to make query past 24 hours ago :("});
+   //     return;
+   // }
+
     Getter.findOne({"username":username},function(results){
         if(results.Error){
-            //failureres.
+
             res.send(Util.createErrorMessage("Failed to get your friend list :("));
         }else{
             var friendList = results.friendList;
@@ -58,21 +101,30 @@ router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked
 
 
             friendList.forEach(function(friend,index,array){
-                Getter.findOneWithProjection({"username": friend.username}, {"lastStoryUpdate": 1}, function (result) {
-                    if (!result.Error) {
-                        if (friend.friendType == Util.MUTUAL_FRIENDS) {
-                            toReturn.push({"username": friend.username, "lastStoryUpdate": result.lastStoryUpdate});
 
+                var agg = [
+                    {$project:{"_id":0,"story":1,"username":1}},
+                    {$match:{"username":friend.username,"story.date":{$gte:theDate}}}
+                    ];
+                Getter.aggregate(agg,function(result){
+                    if(!result.Error) {
+                        if (result.length > 0) {
+                            console.log("Result of aggregation" + result);
+                            if (friend.friendType == Util.MUTUAL_FRIENDS) {
+                                for (var i = 0; i < result[0]["story"].length; i++) {
+                                    toReturn.push({"snapID": result[0]["story"][i].snapID});
+                                }
+                            }
                         }
                     }
+
                     onFinish--;
                     if (onFinish == 0) {
                         // send it
+                        console.log("Sending stories that the user should checkout" + toReturn);
                         res.send(toReturn);
                     }
-
                 });
-
 
             });
 
@@ -95,7 +147,7 @@ router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked
 
  */
 // http://localhost:3000/getContentFromInbox/b/password/2578f19181c91e2a14c801bb6
-router.get("/getContent/:username/:password/:snapID",function(req,res){
+router.get("/getSnapFromInbox/:username/:password/:snapID",function(req,res){
     var username = req.params.username;
     var password = req.params.password;
     var snapID = req.params.snapID;
@@ -105,7 +157,7 @@ router.get("/getContent/:username/:password/:snapID",function(req,res){
     Setter.updateOne({"username":username},{$pull:{"snapchats":{"snapID":new ObjectId(snapID)}}},function(result) {
        Util.helper(result,1,
        function(onErr){
-           res.send(Util.createErrorMessage("unable to get the content"));
+           res.send(Util.createErrorMessage("unable to get the content this is likely because this snap hasn't been placed in your inbox"));
 
        },
        function(onSuccess){
@@ -114,6 +166,23 @@ router.get("/getContent/:username/:password/:snapID",function(req,res){
        });
 
     });
+
+});
+
+router.get("/getStoryContent/:snapID",function(req,res){
+    PictureBase.getContent(req.params.snapID, res);
+});
+
+router.get("/findUsers/:withUsername",function(req,res){
+    var username = req.params.withUsername;
+    console.log("Finding users via regex with name  " + username);
+    var reg = username + ".*";
+    Getter.findFriends(reg,function(friends){
+
+        res.send(friends);
+    });
+
+
 
 });
 router.get("/queryWithProjection/:username/:password/:queryPayload/:projection",function(req,res) {

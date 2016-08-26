@@ -58,7 +58,7 @@ var createNewOptions = function(fileName){
         }
 
     }
-}
+};
 
 
 module.exports.getContent= function(objectID,res){
@@ -92,7 +92,7 @@ module.exports.getContentInfo = function(snapID,callback){
                 if(res.length > 0){
                     callback({"Success":res[0]});
                 }else{
-                    callback({"Failure":"Unable To Locate that Snap :|"});
+                    callback({"Failure":"Unable To Locate that Snap :|"} );
                 }
 
             }
@@ -161,9 +161,9 @@ module.exports.uploadPictureToStore = function(fileLoc,fileName,info,callback) {
 //    gfs = Grid(db, mongo);
 
     var optionOne = createNewOptions(fileName); optionOne.metadata.uploadedBy = info.owner;
-    optionOne.metadata.dataFormat = info.snapType; optionOne.metadata.contentType = info.contentType;
+    optionOne.metadata.dataFormat = info.contentType; optionOne.metadata.contentType = info.snapType;
     optionOne.metadata.length = info.snapLength; optionOne.metadata.date = new Date();
-    console.log("Logging first" + optionOne);
+    console.log("Logging snap with snapType : " +optionOne.metadata.contentType + " with data format : " + optionOne.metadata.dataFormat);
 
     var writeStream = gfs.createWriteStream(optionOne);
     writeStream.on("error",function(err){

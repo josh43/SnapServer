@@ -8,33 +8,42 @@ var app = require('../app');
 var debug = require('debug')('untitled:server');
 var http = require('http');
 
-var DEBUGGING =1;
+var DEBUGGING =0;
 /**
- * Get port from environment and store in Express.
+ * Get port from  environment and store in Express.
  */
 //var port = normalizePort(process.env.PORT || '3000');
 
-var port = normalizePort(DEBUGGING ?'3000' : '8080');
-app.set('port', port);
-
+var port;
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
-
-/**
- * Listen on pasdrovided port, on all network interfaces.
+var server;
+/*Command line arguments --- first should be ip(string) second should be port(int_16)
+ * if no arguments than defaults to debugging
+ *
+ * vvvvvvvvv   this is an example vvvvvvvvv
+ * /usr/local/bin/node bin/www '41.212.56.7' '8080'
  */
 
-//server.listen(port);
 
-if(DEBUGGING){
-  server.listen(port,'localhost');
-}else {
-  server.listen(port, '10.249.83.114');
+var commandArgs = process.argv.slice(2);
+if(commandArgs.length > 0) {
+  port = normalizePort(commandArgs[1]);
+  app.set('port', port);
+  server = http.createServer(app);
+  server.listen(port,commandArgs[0]);
+
+
+}else{
+  port = normalizePort('3000');
+  app.set('port', port);
+  server = http.createServer(app);
+  server.listen(3000,'localhost');
+
 }
-//server.listen(8080,'localhost');
+
 
 server.on('error', onError);
 server.on('listening', onListening);

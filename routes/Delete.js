@@ -12,10 +12,7 @@ var ObjectId = require('mongodb').ObjectID;
 var PictureBase = require('../Database/PictureBase');
 var Async = require('async');
 
-/*
- I could just have the app send commands to the server
 
- */
 //curl -X DELETE http://localhost:3000/helloDelete
 router.delete("/helloDelete", function (req, res) {
     res.send({"I got your": "Delete!!"});
@@ -63,11 +60,8 @@ router.removeUserSnapStory = function (owner, snapID, callback) {
 
     });
 };
-//END HELPER FUNCTIONS
 
-// BEGIN DELETE METHODS
 
-// make sure its astring...
 // /deleteSnapFromStory/blahlblah/blah/"578ec56ce09f0c7e2f2447a9"
 router.delete("/deleteSnapFromStory/:username/:password/:snapID", function (req, res) {
 
@@ -96,13 +90,14 @@ router.delete("/deleteSnapFromStory/:username/:password/:snapID", function (req,
                     });
                     var userArray = data.Success.metadata.sentTo;
                     if (userArray) {
+                        var action = Util.removeAction(snapID);
                         for (var i = 0; i < userArray.length; i++) {
                             var username = userArray[i];
                             // if it fails oh well, you will be able to see content that should have been deleted
                             //
                             // O
                             //
-                            Setter.updateOne({"username": username}, {$addToSet: {"actionList": action}});
+                            Setter.updateOne({"username": username}, {$addToSet: {"actionList": action}},function(res){});
                         }
                     }
                 } else {
@@ -120,17 +115,27 @@ router.delete("/deleteSnapFromStory/:username/:password/:snapID", function (req,
 });
 
 router.delete("/removeFriend/:username/:password/:friendUserName/:friendType", function (req, res) {
+
+    // curl -X DELETE http://localhost:3000/removeFriend/Joshua/password/Mark/1
     var username = req.params.username;
 
     var password = req.params.password;
     var friendName = req.params.friendUserName;
-    var friendType = req.params.friendType;
+    var type = req.params.friendType;
 
-    router.deleteFriendWithWaterfall(username,password,friendName,friendType,res);
+    var friendFriendType, myFriendType;
+    if(type == 2){ // I added this friend so the friendType is THIS_FRIEND_ADDED ME
+        myFriendType = 2;
+        friendFriendType = 3;
+    }else if(type  == 1){ // then we are both mutual friends
+        myFriendType = 1;
+        friendFriendType = 1;
+    }
+    router.deleteFriendWithWaterfall(username,password,friendName,myFriendType,friendFriendType,res);
 
 });
 
-router.deleteFriendWithWaterfall = function(username,password,friendName,friendType,res){
+router.deleteFriendWithWaterfall = function(username,password,friendName,myFriendType,friendFriendType,res){
     // if you want to return immediatelely on error just do callback(errorMessageHere);
 
 
@@ -159,20 +164,20 @@ router.deleteFriendWithWaterfall = function(username,password,friendName,friendT
         },
         function(callback){
             var query = {"username": username};
-            var pull = {$pull: {"friendList":Util.createFriend(friendName,friendType)}};
+            var pull = {$pull: {"friendList":Util.createFriend(friendName,myFriendType)}};
             Setter.updateOne(query, pull, function (result) {
                Util.helper(result,1,function(onErr){callback(onErr)},function(onSucc){callback(null)});
             });
         },
         function(callback){
             // deleted friend from users list now delete from my list
-            var query = {"username": friendName};
-            var pull = {$pull: {"friendList":Util.createFriend(username,friendType)}};
+            var query = {"username": friendName};                     //
+            var pull = {$pull: {"friendList":Util.createFriend(username,friendFriendType)}};
             Setter.updateOne(query, pull, function (result) {
                 Util.helper(result,1,function(errRes){
                     // undo on failure
                     var query = {"username": username};
-                    var push = {$addToSet: {"friendList":Util.createFriend(friendName,friendType)}};
+                    var push = {$addToSet: {"friendList":Util.createFriend(friendName,myFriendType)}};
                     Setter.updateOne(query,push,function(x){});
                     callback(errRes);
                 },function(onSucc){callback(null,onSucc)});

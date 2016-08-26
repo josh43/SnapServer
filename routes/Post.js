@@ -79,9 +79,12 @@ router.updateUserSnapInbox = function(user,owner,objectID){
 };
 
 // remember to update lastStoryUpdate with the date field
+
+
 router.updateUserSnapStory = function(owner,snapID,date,callback) {
     var filter = {"username": owner};
-    var snap = Util.createSnap(snapID);
+    var snap ={"snapID":snapID,"date":date};
+
     var update = {
                     $addToSet: {"story": snap},
                     $max: {"lastStoryUpdate": date}
@@ -105,22 +108,49 @@ router.updateUserSnapStory = function(owner,snapID,date,callback) {
 //END HELPER FUNCTIONS
 
 // BEGIN POST METHODS
-router.post("/sendSnap",upload.single("contentFile"), function (req, res) {
+/*
+
+.fields(fields)
+
+Accept a mix of files, specified by fields. An object with arrays of files will be stored in req.files.
+
+fields should be an array of objects with name and optionally a maxCount. Example:
+
+[
+  { name: 'avatar', maxCount: 1 },
+  { name: 'gallery', maxCount: 8 }
+]
+
+*/
+
+
+router.post("/sendSnap",
+    upload.fields([
+        {name:'info'},
+        {name:'userList'},
+        {name:'contentFile'}
+    ]), function (req, res) {
     //curl -F "contentFile=@./images/sky.jpg" -F "name=sky.jpg" -F "userList={\"users\":[\"stefan\",\"miguel\",\"berneaseMountainDog\"]}" -F "info={\"snapLength\":5,\"snapType\":1,\"contentType\":0,\"owner\":\"Blade\"}" http://localhost:3000/sendSnap
 
 
-    var info = req.body.info;
-    var theArr = JSON.parse(req.body.userList);
-    if(typeof(info) !== 'object'){
-        info = JSON.parse(info);
-    }
-    var owner = info.owner;
+
+        console.log("Made it to sendSnap!");
+        var body = req.body;
+        var info = JSON.parse(body.info);
+        var theArr = JSON.parse(body.userList);
+    console.log("Logging the info" + info);
+        console.log("Logging the userList" + theArr);
+    console.log("Logging the file" + req.files.contentFile[0]);
+
+
+         var owner = info.owner;
 
     //var userList = req.body.userList;
-    var path = req.file.path;
+         var path = req.files.contentFile[0].path;
 
+    console.log("Printing all info \n" + info +"friendsToSend To\n"  + theArr);
     //info = {\"snapLength\":5,\"snapType\":1,\"contentType\":0,\"owner\":\"Blade\"}
-    PictureBase.uploadPictureFrom(path,owner,info,function(data){
+    PictureBase.uploadPictureToStore(path,owner,info,function(data){
         if(data.Success){
             // proceed to step too and actually update every friends inbox
             var size = theArr.users.length;
@@ -145,40 +175,89 @@ router.post("/sendSnap",upload.single("contentFile"), function (req, res) {
 router.post("/picWasScreenShotted/:objID/:byUser",function(req,res){
 
     var update = {$addToSet:{"metadata.screenShotted":req.params.byUser}};
-    PictureBase.updatePictureInfo(req.params.objID,update,function(result){
+    PictureBase.updatePictureInfo(new ObjectId(req.params.objID),update,function(result){
         res.send(result);
     });
 });
 router.post("/picWasSeen/:objID/:byUser",function(req,res){
 
+// this might be broke.... :(((
     var update = {$inc:{"metadata.numViews":1},$addToSet:{"metadata.seenBy":req.params.byUser}};
-    PictureBase.updatePictureInfo(req.params.objID,update,function(result){
+    PictureBase.updatePictureInfo(new ObjectId(req.params.objID),update,function(result){
        res.send(result);
    });
 });
-router.post("/storySnap",upload.single("contentFile"), function (req, res) {
+router.post("/storySnap",upload.fields([
+    {name:'info'},
+    {name:'contentFile'}
+]), function (req, res) {
     //curl -F "contentFile=@./images/sky.jpg" -F "name=sky.jpg" -F "info={\"snapLength\":5,\"snapType\":1,\"contentType\":0,\"owner\":\"Blade\"}" http://localhost:3000/storySnap
-    var info = req.body.info;
-    if(typeof(info) !== 'object'){
-        info = JSON.parse(info);
-    }
-    var owner = info.owner;
 
+    console.log("Made it to storySnap!!");
+    var body = req.body;
+    var info = JSON.parse(body.info);
+    console.log("Logging the info" + info);
+    console.log("Logging the file" + req.files.contentFile[0]);
+
+
+
+    var owner = info.owner;
+    console.log("The person uploading to the story" + owner);
     //var userList = req.body.userList;
-    var path = req.file.path;
+    var path = req.files.contentFile[0].path;
 
     //info = {\"snapLength\":5,\"snapType\":1,\"contentType\":0,\"owner\":\"Blade\"}
     PictureBase.uploadPictureToStore(path,owner,info,function(data){
         if(data.Success){
 
             module.exports.updateUserSnapStory(owner,data.Success,data.date,function(toSend){
-                res.send(toSend);
+                res.send({"Success":{"_id":data.Success}});
             });
 
         }else {
             res.send(data);
         }
     });
+
+
+});
+//#define USER_SAW 1 #define USER_SCREEN_SHOTTED 2 #define USER_DELETED 3
+router.post("/action/:actionType/:user/:ownerOfSnap/:snapID", function(req,res){
+    var user = req.params.user;
+    var owner = req.params.ownerOfSnap;
+    var snapID = new ObjectId(req.params.snapID);
+    var actionType = req.params.actionType;
+    var query = {"username":owner};
+    var action = {"user":user,"actionType":actionType,"snapID":req.params.snapID};
+    var update = {$addToSet:{"actionList":action}};
+    if(actionType < 3){
+
+        Setter.updateOne(query,update,function(result){
+            res.send(result);
+        });
+    }else{
+        Getter.findOne(query,function(result){
+            if(!result["Error"]){
+                var friendList = result["Error"].friendList;
+                var countDown = friendList.length;
+                for(var i =0; i < friendList.length; i ++){
+                    var friendQuery = {"username":friendList[i].username};
+                    action.user = owner;
+                    update = {$addToSet:{"actionList":action}};
+                    Setter.updateOne(friendQuery,update,function(onFin){
+
+                        countDown--;
+                        if(countDown == 0){
+                            res.send({"Success":"Sent all delete snap story picture to your frinds"});
+                        }
+                    });
+                }
+            }else{
+                res.send(result);
+            }
+        })
+        // delete and send to everyones inbox
+    }
 
 
 });
@@ -214,8 +293,17 @@ router.post("/addFriend/:username/:friendName/:type",function(req,res){
     var friendName = req.params.friendName;
     var type = req.params.type;
 
-    var friend = Util.createFriend(friendName,type);
-    var meAsAFriend = Util.createFriend(username,type);
+    var friendFriendType, myFriendType;
+    if(type == 2){ // I added this friend so the friendType is THIS_FRIEND_ADDED ME
+        myFriendType = 2;
+        friendFriendType = 3;
+    }else if(type  == 3){ // then we are both mutual friends
+        myFriendType = 1;
+        friendFriendType = 1;
+    }
+
+    var friend = Util.createFriend(friendName,myFriendType);
+    var meAsAFriend = Util.createFriend(username,friendFriendType);
 
     Setter.updateOne({"username":username},{$addToSet:{"friendList":friend}},function(result){
         Util.helper(result,
@@ -226,16 +314,35 @@ router.post("/addFriend/:username/:friendName/:type",function(req,res){
                 // add to other
                 Setter.updateOne({"username":friendName},{$addToSet:{"friendList":meAsAFriend}},function(result){
                     Util.helper(result,function(onErr){
-                        Setter.updateOne({"username":username},{pull:{"friendList":friend}},function(result){});
+                        Setter.updateOne({"username":username},{$pull:{"friendList":friend}},function(result){});
                         //failed DAMN
                         res.send(Util.createErrorMessage("Failed to add you to the friends list!"));
                         },function(onSucc){
-                            var usernameAction = {"username":username};
-                            var theAction= Util.createAction(Util.FRIEND_NOTIFICATION,usernameAction);
-                            
-                            Setter.updateOne({"username":friendName},{$addToSet:{"actionList":theAction}},function(res){
 
-                            });
+                            if(myFriendType == 1){
+
+                                // just re create it, for some reason ...
+
+
+                                // remove the other kinds this is terrible code but mongo is a bitch sometimes, I'm sure there is an easy way
+                                // to accomplish what I want but I'm definitely not going to spend 5 hours finding it
+
+
+
+                                friend.friendType =2;
+                                Setter.updateOne({"username":username},{$pull:{"friendList" : friend}},function(result){console.log(result);return;});
+                                friend.friendType =3;
+                                Setter.updateOne({"username":username},{$pull:{"friendList" : friend  }},function(result){console.log(result);return;});
+
+                                meAsAFriend.friendType =2;
+                                Setter.updateOne({"username":friendName},{$pull:{"friendList" : meAsAFriend }},function(result){console.log(result);return;});
+                                meAsAFriend.friendType =3;
+                                Setter.updateOne({"username":friendName},{$pull:{"friendList" : meAsAFriend }},function(result){console.log(result);return;});
+
+
+                            }
+
+
                             res.send(Util.SUCCESS_MESSAGE);
 
                     });
