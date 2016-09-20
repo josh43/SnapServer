@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#sudo mongod &
+#echo "starting up mongo server daemon"
+#sleep 3 s
+#node app.js
