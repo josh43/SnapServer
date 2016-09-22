@@ -24,6 +24,7 @@ var createUser = function(name){
 		},{upsert:true});	
 }
 
+
 db.USERS.update({"username":"Falcon"},
 {
 	 'username':"Falcon",
