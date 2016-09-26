@@ -20,11 +20,38 @@ MongoClient.connect(url, function (err, theDB) {
     assert.equal(null, err);
     console.log("Connected correctly to server.");
     //insertDocument(db,onComplete);
-    if(theDB== null){
-        throw err;
+    if(theDB== null){ // than we are live
+
+        // redhat
+        var connection_string = '127.0.0.1:27017/nodejssnap';
+        // if OPENSHIFT env variables are present, use the available connection info:
+        if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
+            connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
+                process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
+                process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
+                process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
+                process.env.OPENSHIFT_APP_NAME;
+        }
+
+
+        var connected = false;
+        MongoClient.connect('mongodb://'+connection_string, function (err, theDB) {
+            assert.equal(null, err);
+            console.log("Connected correctly to server.");
+            //insertDocument(db,onComplete);
+            if(theDB== null){
+                throw err;
+            }
+            theRealDB = theDB;
+            connected = true;
+
+        });
+
+
+    }else {
+        theRealDB = theDB;
+        connected = true;
     }
-    theRealDB = theDB;
-    connected = true;
 
 });
 
