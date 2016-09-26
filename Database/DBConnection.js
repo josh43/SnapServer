@@ -17,8 +17,6 @@ var connected = false;
 
 // Dont forget to sudo mongod :|||||||
 MongoClient.connect(url, function (err, theDB) {
-    assert.equal(null, err);
-    console.log("Connected correctly to server.");
     //insertDocument(db,onComplete);
     if(theDB== null){ // than we are live
 
@@ -37,13 +35,13 @@ MongoClient.connect(url, function (err, theDB) {
         var connected = false;
         MongoClient.connect('mongodb://'+connection_string, function (err, theDB) {
             assert.equal(null, err);
-            console.log("Connected correctly to server.");
             //insertDocument(db,onComplete);
             if(theDB== null){
                 throw err;
             }
             theRealDB = theDB;
             connected = true;
+            console.log("Connected correctly to server.");
 
         });
 
@@ -51,6 +49,8 @@ MongoClient.connect(url, function (err, theDB) {
     }else {
         theRealDB = theDB;
         connected = true;
+        console.log("Connected correctly to server.");
+
     }
 
 });
