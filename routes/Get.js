@@ -71,6 +71,12 @@ router.get("/testAgg",function(req,res){
 //           ]
 
 
+function isLessThanTwentyFour( d){
+    var ltwentyFour = new Date();
+    //ltwentyFour.setMilliseconds(ltwentyFour.getMilliseconds() - (24 * 1000 * 60 * 60));
+    ltwentyFour.setMilliseconds(ltwentyFour.getMilliseconds() - 86400000);
+    return d > ltwentyFour;
+};
 
 router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked",function(req,res){
     var username = req.params.username;
@@ -89,6 +95,8 @@ router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked
    //     res.send({"Error": "trying to make query past 24 hours ago :("});
    //     return;
    // }
+
+
 
     Getter.findOne({"username":username},function(results){
         if(results.Error){
@@ -110,9 +118,12 @@ router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked
                     if(!result.Error) {
                         if (result.length > 0) {
                             console.log("Result of aggregation" + result);
+                            var twentyFourAgo = new Date(-24 * 60 * 60 * 60);
                             if (friend.friendType == Util.MUTUAL_FRIENDS) {
                                 for (var i = 0; i < result[0]["story"].length; i++) {
-                                    toReturn.push({"snapID": result[0]["story"][i].snapID});
+                                    if(isLessThanTwentyFour(result[0]["story"][i].date )) {
+                                        toReturn.push({"snapID": result[0]["story"][i].snapID});
+                                    }
                                 }
                             }
                         }
