@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="bin/www" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="/usr/local/bin/node" path-to-js-file="bin/www" application-parameters="10.0.0.4 8080" working-dir="$PROJECT_DIR$">
+  <configuration default="false" name="bin/www" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="/usr/local/bin/node" path-to-js-file="bin/www" application-parameters="10.0.0.4 8080 --ideDebugging=true" working-dir="$PROJECT_DIR$">
     <envs>
       <env name="DEBUG" value="untitled:*" />
     </envs>
     <browser url="http://localhost:3000/" />
-    <profiling one-log-file="true" do-profile="true" />
+    <profiling one-log-file="true" />
     <method />
   </configuration>
 </component>

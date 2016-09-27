@@ -86,8 +86,8 @@ router.updateUserSnapStory = function(owner,snapID,date,callback) {
     var snap ={"snapID":snapID,"date":date};
 
     var update = {
-                    $addToSet: {"story": snap},
-                    $max: {"lastStoryUpdate": date}
+                    $addToSet : {"story": snap},
+                    $max : {"lastStoryUpdate": date}
                 };
     Setter.updateOne(filter, update, function (result) {
 
@@ -95,6 +95,8 @@ router.updateUserSnapStory = function(owner,snapID,date,callback) {
             function (errRes) {
                 var builder = Util.ERROR_MESSAGE;
                 builder.Error = {"Message": "Failed to update the story :(   " + errRes.message};
+                console.log("Failed to update story, pulling the snap with error" + errRes.message);
+
                 Setter.updateOne(filter,{$pull: {"story": snap}},function(x,y){});
                 callback(builder);
             },
@@ -193,7 +195,6 @@ router.post("/storySnap",upload.fields([
 ]), function (req, res) {
     //curl -F "contentFile=@./images/sky.jpg" -F "name=sky.jpg" -F "info={\"snapLength\":5,\"snapType\":1,\"contentType\":0,\"owner\":\"Blade\"}" http://localhost:3000/storySnap
 
-    console.log("Made it to storySnap!!");
     var body = req.body;
     var info = JSON.parse(body.info);
     console.log("Logging the info" + info);
@@ -206,11 +207,14 @@ router.post("/storySnap",upload.fields([
     //var userList = req.body.userList;
     var path = req.files.contentFile[0].path;
 
+
+    var theDate = new Date();
+    console.log("Uploading snap @server time " + theDate);
     //info = {\"snapLength\":5,\"snapType\":1,\"contentType\":0,\"owner\":\"Blade\"}
     PictureBase.uploadPictureToStore(path,owner,info,function(data){
         if(data.Success){
 
-            module.exports.updateUserSnapStory(owner,data.Success,data.date,function(toSend){
+            module.exports.updateUserSnapStory(owner,data.Success,theDate,function(toSend){
                 res.send({"Success":{"_id":data.Success}});
             });
 

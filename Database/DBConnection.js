@@ -41,7 +41,7 @@ MongoClient.connect(url, function (err, theDB) {
             }
             theRealDB = theDB;
             connected = true;
-            console.log("Connected correctly to server.");
+            console.log("Connected correctly to openshift databse server.");
 
         });
 

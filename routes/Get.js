@@ -82,7 +82,6 @@ router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked
     var username = req.params.username;
     var password = req.params.password;
     var lastChecked = req.params.lastTimeChecked;
-    var theDate = new Date(lastChecked);
 
    // var twentyFourAgo =  Date.now();
    // twentyFourAgo.setTime(twentyFourAgo.getMilliseconds() - (24 * 1000 * 60));
@@ -106,19 +105,23 @@ router.get("/getLastTimeFriendsUpdatedStory/:username/:password/:lastTimeChecked
             var friendList = results.friendList;
             var onFinish = friendList.length;
             var toReturn = [];
+            var twentyFourAgo = new Date();
+            //(-24 * 60 * 60 * 60)
+            twentyFourAgo.setMilliseconds(twentyFourAgo.getMilliseconds()  - 86400000);
+            console.log("Twentyfour ago query :" + twentyFourAgo);
+
 
 
             friendList.forEach(function(friend,index,array){
 
                 var agg = [
                     {$project:{"_id":0,"story":1,"username":1}},
-                    {$match:{"username":friend.username,"story.date":{$gte:theDate}}}
+                    {$match:{"username":friend.username,"story.date":{$gte:twentyFourAgo}}}
                     ];
                 Getter.aggregate(agg,function(result){
                     if(!result.Error) {
                         if (result.length > 0) {
                             console.log("Result of aggregation" + result);
-                            var twentyFourAgo = new Date(-24 * 60 * 60 * 60);
                             if (friend.friendType == Util.MUTUAL_FRIENDS) {
                                 for (var i = 0; i < result[0]["story"].length; i++) {
                                     if(isLessThanTwentyFour(result[0]["story"][i].date )) {
